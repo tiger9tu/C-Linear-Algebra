@@ -41,10 +41,10 @@ int main(int argc, char * argv[]){
 	printMatrix(stdout, B);
 	printf("\n");
 	
-	Matrix E = makeZero(A);
-	printf("A made empty:\n");
-	printMatrix(stdout, E);
-	printf("\n");
+	// Matrix E = makeZero(A);
+	// printf("A made empty:\n");
+	// printMatrix(stdout, E);
+	// printf("\n");
 
 	Matrix D = transpose(B);
 	printf("transpose B:\n");
@@ -85,7 +85,7 @@ int main(int argc, char * argv[]){
 	freeMatrix(&B);
 	freeMatrix(&C);
 	freeMatrix(&D);
-	freeMatrix(&E);
+	// freeMatrix(&E);
 	freeMatrix(&F);
 	freeMatrix(&G);
 	freeMatrix(&H);

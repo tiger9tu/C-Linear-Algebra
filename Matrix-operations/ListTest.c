@@ -39,7 +39,7 @@ int main(int argc, char * argv[]){
 
     for(int i=0; i<(length(B)/2)-1; i++){
     	deleteBack(B);
-    	deleteFront(B):
+    	deleteFront(B);
 	}
 	if(length(B) == 1){
     	printf("deleteFront and deleteBack working");
