@@ -153,3 +153,31 @@ matrix* unitVectorColumns(matrix* a) {
 
     return out;
 }
+
+/*===========================================================================
+ * Get the Householder vector 
+ *=========================================================================*/
+void house(matrix* x /*vector x*/, matrix* v, double* beta){
+    int m = x->height;
+    matrix* subx = subVector(x,1,m);
+    double sigma = innerProductVector(subx,subx);
+    if(sigma == 0 && x->data[0] >= 0) {
+        *beta = 0;
+    }
+    else if(sigma == 0 && x->data[0] < 0) {
+        *beta = -2;
+    }
+    else{
+        // calculate x1 - ||x|| while reduce cancelation error
+        double normx = sqrt(sigma + (x->data[0])* (x->data[0]));
+        double v1Factor = - sigma / (x->data[0] + sqrt(sigma));
+        if(x->data[0] <= 0) {
+            v->data[0] = x->data[0] + normx;
+        }
+        else {
+            v->data[0] = -sigma / (x->data[0] + normx);
+        }
+        *beta = 2 * v->data[0] * v->data[0] / (sigma + v->data[0] * v->data[0]);
+        rescaleMatrix(v, 1 / v->data[0]);
+    }
+}

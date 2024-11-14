@@ -333,6 +333,14 @@ matrix* scaleMatrix(matrix* m, double value) {
     return out;
 }
 
+
+
+void rescaleMatrix(matrix* m, double scale){
+    for(int i = 0; i < m->height; i++)
+        for(int j =0; j < m->width; j++)
+            m->data[i* m->width + j] *= scale;
+}
+
 /*===========================================================================
  * rowSwap
  * Given a matrix, this algorithm will swap rows p and q, provided
@@ -367,6 +375,30 @@ void rowSwap(matrix* a, int p, int q) {
 
     return;
 }
+
+double innerProductVector(matrix* x, matrix* y){
+    double l2norm = 0;
+    for (int j = 0; j < x->height; j++) {
+        l2norm += x->data[j] * y->data[j];
+    }
+    return l2norm;
+}
+
+
+/*===========================================================================
+ * subVector
+ * s is the start, e is the index after the last element.
+ *=========================================================================*/
+matrix* subVector(matrix *a, int s , int e){
+   matrix * subVec =  (matrix*) malloc(sizeof(matrix)); 
+   int length = e - s;
+   subVec->height = a->height < length? a->height : length;
+   subVec->width = a->width < length? a->width : length;
+   subVec->data = a->data + s;
+   return subVec;
+}
+
+
 
 /*===========================================================================
  * dotProductMatrix

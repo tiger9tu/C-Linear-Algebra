@@ -58,8 +58,10 @@ matrix* multiplyMatrix(matrix* a, matrix* b);
 matrix* scaleMatrix(matrix* m, double value);
 matrix* covarianceMatrix(matrix* m);
 void rowSwap(matrix* a, int p, int q); // This method changes the input matrix.
+double innerProductVector(matrix* x, matrix* y);
 matrix* dotProductMatrix(matrix* a, matrix* b);
 matrix* dotDiagonalMatrix(matrix* a, matrix* b);
 matrix* L2_distance(matrix* a, matrix* b);
+matrix* subVector(matrix *a, int s , int e);
 
 #endif
