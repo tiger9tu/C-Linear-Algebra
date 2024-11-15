@@ -135,11 +135,12 @@ void writeMatrix(matrix* m, char* filename) {
  *=========================================================================*/
 void printMatrix(matrix* m) {
     int i, j;
-    double* ptr = m->data;
+    // double* ptr = m->data;
     printf("%d %d\n", m->width, m->height);
     for (i = 0; i < m->height; i++) {
         for (j = 0; j < m->width; j++) {
-            printf(" %9.6f", *(ptr++));
+            // printf(" %9.6f", *(ptr++));
+            printf(" %9.6f", m->data[i * m->width + j]);
         }
         printf("\n");
     }
@@ -315,6 +316,22 @@ matrix* multiplyMatrix(matrix* a, matrix* b) {
     return out;
 }
 
+
+matrix* addMatrix(matrix*a, matrix* b){
+
+    matrix* c;
+    assert(a->width == b->width, "Matrices width different");
+    assert(a->height == b->height, "Matrices height.");
+    c = makeMatrix(a->width, a->height);
+    for (size_t i = 0; i < a->height; i++)
+        for (size_t j = 0; j < a->width; j++)
+        {
+            int idx = i * a->width + j;
+            c->data[idx] = a->data[idx] + b->data[idx]; 
+        }
+    return c;
+}
+
 /*===========================================================================
  * scaleMatrix
  * Given a matrix and a double value, this returns a new matrix where each
@@ -386,14 +403,14 @@ double innerProductVector(matrix* x, matrix* y){
 
 
 /*===========================================================================
- * subVector
+ * subVectorRef
  * s is the start, e is the index after the last element.
  *=========================================================================*/
-matrix* subVector(matrix *a, int s , int e){
+matrix* subVectorRef(matrix *a, int s , int e){
    matrix * subVec =  (matrix*) malloc(sizeof(matrix)); 
    int length = e - s;
-   subVec->height = a->height < length? a->height : length;
-   subVec->width = a->width < length? a->width : length;
+   subVec->height = length;
+   subVec->width = 1;
    subVec->data = a->data + s;
    return subVec;
 }
