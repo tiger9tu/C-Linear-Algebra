@@ -206,17 +206,7 @@ void Qc(matrix* v, double beta, matrix*c){
     rescaleVecAdd(c, v, 1, -beta * projLength);
 }
 
-matrix* removeV(houseHolderFactor* hhf, int vrank){
-    matrix* R = transposeMatrix(hhf->qrT);
-    for (size_t i = 0; i < vrank && i < hhf->qrT->width; i++)
-    {
-        for (size_t j = i + 1; j < R->height; j++)
-        {
-            R->data[j * R->width + i] = 0;
-        }   
-    }
-    return R;
-}
+
 
 void printTranspose(matrix* a){
     matrix* tmp = transposeMatrix(a);
@@ -232,12 +222,6 @@ houseHolderFactor* houseHolderQR(matrix* a){
     houseHolderFactor* hhf = makeHouseHolderFactor(a->width);
     hhf->qrT = transposeMatrix(copyMatrix(a));
 
-    matrix* tmpx1 = subVectorRef(hhf->qrT, 0, 3);
-    matrix* x1 = copyMatrix(tmpx1);
-    printf("x1 = \n");
-    printMatrix(x1);
-matrix* I3 = eyeMatrix(3);
-    
     matrix* xbuffer = makeMatrix(1, a->height);
     for(int i = 0; i < 2; i++){
         matrix* I = eyeMatrix(a->height - i);
@@ -247,33 +231,8 @@ matrix* I3 = eyeMatrix(3);
         {
             xbuffer->data[l] = vi->data[l];
         }
-        
-
+    
         house(vi, &(hhf->betas[i]));
-              printf("house vi height = %d: \n", vi->height);
-        printMatrix(vi);
-        // printf("vi[2] = %lf\n", vi->data[2]);
-        printf("end house vi\n");
-        printf("beta = %lf\n", hhf->betas[i]);
-        double scaleback = sqrt(hhf->betas[i] / 2);
-        matrix* ve = scaleMatrix(vi,  scaleback);
-        printf("ve: \n");
-        printMatrix(ve);
-        // now check I - beta vvT x = ||x||e1
-        matrix* viT = transposeMatrix(vi);
-        matrix* vvT = multiplyMatrix(vi, viT);
-        printf("outer: \n");
-        printMatrix(vvT);
-        rescaleMatrix(vvT, -hhf->betas[i]);
-        matrix* mirror = addMatrix(I, vvT);
-        printf("P: \n");
-        printMatrix(mirror);
-        printf("x = \n");
-        matrix* xsub = subVectorRef(xbuffer, 0, a->height - i);
-        printMatrix(xsub);
-        matrix* flakx = multiplyMatrix(mirror,xsub );
-        printf("flacx: \n");
-        printMatrix(flakx);
 
         // update the submatrix
         for (size_t j = i + 1; j < a->width; j++)
@@ -281,7 +240,6 @@ matrix* I3 = eyeMatrix(3);
             matrix* vj = subVectorRef(hhf->qrT, j*hhf->qrT->width + i, (j+1)*hhf->qrT->width);
             Qc(vi, hhf->betas[i], vj);
         }
-
 
         // update the current column's top entry R(i, i)
         double vTc = 0;
@@ -291,46 +249,22 @@ matrix* I3 = eyeMatrix(3);
         }
         
         vi->data[0] = xbuffer->data[0] - hhf->betas[i] * vTc;
-
-        printf("updated:\n");
-        printTranspose(hhf->qrT);
-        //debug
-        // matrix* debug = copyMatrix(hhf->qrT);
-        matrix* Rdebug = removeV(hhf, i+ 1);
-        printf("Rdebug:  \n");
-        printMatrix(Rdebug);
-        matrix* tmpvi = makeMatrix(1, 3);
-        for (size_t f = i; f < 3; f++)
-        {
-            tmpvi->data[f] = vi->data[f-i];
-        }
-        
-        
-        printf("tmpvi = \n");
-        tmpvi->data[i] = 1;
-
-        printMatrix(tmpvi);
-        matrix* tmpviT = transposeMatrix(tmpvi);
-        matrix* bvvt = multiplyMatrix(tmpvi, tmpviT);
-        rescaleMatrix(bvvt,- hhf->betas[i]);
-        matrix* QT = addMatrix(I3, bvvt);
-        matrix* QTR = multiplyMatrix(QT, Rdebug);
-      printf("QTF = \n");
-        printMatrix(QTR);
-        freeMatrix(Rdebug);
-        freeMatrix(tmpvi);
-        freeMatrix(tmpviT);
-        freeMatrix(bvvt);
-        freeMatrix(QT);
-        freeMatrix(QTR);
-        freeMatrix(I);
-  
-        
-        printf("Rdebug end\n");
     }
-    freeMatrix(xbuffer);
-    freeMatrix(I3);
+    
     return hhf;
+}
+
+
+matrix* removeV(houseHolderFactor* hhf, int vrank){
+    matrix* R = transposeMatrix(hhf->qrT);
+    for (size_t i = 0; i < vrank && i < hhf->qrT->width; i++)
+    {
+        for (size_t j = i + 1; j < R->height; j++)
+        {
+            R->data[j * R->width + i] = 0;
+        }   
+    }
+    return R;
 }
 
 void restoreFromHouseholderFactor(houseHolderFactor* hhf){
