@@ -236,11 +236,12 @@ houseHolderFactor* houseHolderQR(matrix* a){
     matrix* x1 = copyMatrix(tmpx1);
     printf("x1 = \n");
     printMatrix(x1);
-
-    matrix* I = eyeMatrix(a->height);
+matrix* I3 = eyeMatrix(3);
+    
     matrix* xbuffer = makeMatrix(1, a->height);
-    for(int i = 0; i < 1; i++){
-        matrix* vi = subVectorRef(hhf->qrT, i*hhf->qrT->width, (i+1)*hhf->qrT->width);
+    for(int i = 0; i < 2; i++){
+        matrix* I = eyeMatrix(a->height - i);
+        matrix* vi = subVectorRef(hhf->qrT, i*hhf->qrT->width + i, (i+1)*hhf->qrT->width);
 
         for (size_t l = 0; l < a->height - i; l++)
         {
@@ -268,8 +269,9 @@ houseHolderFactor* houseHolderQR(matrix* a){
         printf("P: \n");
         printMatrix(mirror);
         printf("x = \n");
-        printMatrix(x1);
-        matrix* flakx = multiplyMatrix(mirror,x1 );
+        matrix* xsub = subVectorRef(xbuffer, 0, a->height - i);
+        printMatrix(xsub);
+        matrix* flakx = multiplyMatrix(mirror,xsub );
         printf("flacx: \n");
         printMatrix(flakx);
 
@@ -297,15 +299,21 @@ houseHolderFactor* houseHolderQR(matrix* a){
         matrix* Rdebug = removeV(hhf, i+ 1);
         printf("Rdebug:  \n");
         printMatrix(Rdebug);
-        matrix* tmpvi = copyMatrix(vi);
+        matrix* tmpvi = makeMatrix(1, 3);
+        for (size_t f = i; f < 3; f++)
+        {
+            tmpvi->data[f] = vi->data[f-i];
+        }
+        
+        
         printf("tmpvi = \n");
-        tmpvi->data[0] = 1;
+        tmpvi->data[i] = 1;
 
         printMatrix(tmpvi);
         matrix* tmpviT = transposeMatrix(tmpvi);
         matrix* bvvt = multiplyMatrix(tmpvi, tmpviT);
         rescaleMatrix(bvvt,- hhf->betas[i]);
-        matrix* QT = addMatrix(I, bvvt);
+        matrix* QT = addMatrix(I3, bvvt);
         matrix* QTR = multiplyMatrix(QT, Rdebug);
       printf("QTF = \n");
         printMatrix(QTR);
@@ -315,18 +323,19 @@ houseHolderFactor* houseHolderQR(matrix* a){
         freeMatrix(bvvt);
         freeMatrix(QT);
         freeMatrix(QTR);
+        freeMatrix(I);
   
         
         printf("Rdebug end\n");
     }
-    freeMatrix(I);
     freeMatrix(xbuffer);
+    freeMatrix(I3);
     return hhf;
 }
 
 void restoreFromHouseholderFactor(houseHolderFactor* hhf){
     matrix* a = transposeMatrix(hhf->qrT);
-    for (size_t i = 0; i < 1; i++)
+    for (size_t i = 0; i < 2; i++)
     {
         for (size_t j = i + 1; j < a->height; j++)
         {
@@ -347,7 +356,7 @@ void restoreFromHouseholderFactor(houseHolderFactor* hhf){
 
     matrix* I = eyeMatrix(hhf->qrT->width);
 
-    for (int i =  0; i >=0; i--)
+    for (int i =  1; i >=0; i--)
     {
         matrix* aref = a;
         matrix* vi = subVectorRef(vs, i*vs->width, (i + 1)*vs->width);
