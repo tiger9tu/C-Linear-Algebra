@@ -5,10 +5,10 @@
 int main(int argc, char** argv) {
     
 
-    matrix* a = makeMatrix(3,3);
-    for (size_t i = 0; i < 3; i++)
+    matrix* a = makeMatrix(3,4);
+    for (int i = 0; i < a->height; i++)
     {
-        for (size_t j = 0; j < 3; j++)
+        for (int j = 0; j < a->width; j++)
         {
             a->data[i*3 + j] = i*3 + j;
         }
@@ -20,7 +20,8 @@ int main(int argc, char** argv) {
     houseHolderFactor* vod = houseHolderQR(a);
     printMatrix(vod->qrT);
     restoreFromHouseholderFactor(vod);
-
+    freeMatrix(vod->qrT);
+    freeMatrix(a);
     // matrix* vecx = makeMatrix(1, 3);
     // printf("vecx = %p\n", vecx);
     // vecx->data[0] = 1;

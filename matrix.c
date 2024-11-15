@@ -316,6 +316,14 @@ matrix* multiplyMatrix(matrix* a, matrix* b) {
     return out;
 }
 
+void timesMatrix(matrix* a, matrix*b){
+    matrix* tmp = multiplyMatrix(a, b);
+    matrix* adata = a->data;
+    a->width = tmp->width;
+    a->height = tmp->height;
+    a->data = tmp->data;
+    free(a->data);
+}
 
 matrix* addMatrix(matrix*a, matrix* b){
 
@@ -323,13 +331,24 @@ matrix* addMatrix(matrix*a, matrix* b){
     assert(a->width == b->width, "Matrices width different");
     assert(a->height == b->height, "Matrices height.");
     c = makeMatrix(a->width, a->height);
-    for (size_t i = 0; i < a->height; i++)
-        for (size_t j = 0; j < a->width; j++)
+    for (int i = 0; i < a->height; i++)
+        for (int j = 0; j < a->width; j++)
         {
             int idx = i * a->width + j;
             c->data[idx] = a->data[idx] + b->data[idx]; 
         }
     return c;
+}
+
+void plusMatrix(matrix* a, matrix* b){
+    assert(a->width == b->width, "Matrices width different");
+    assert(a->height == b->height, "Matrices height.");
+    for (int i = 0; i < a->height; i++)
+        for (int j = 0; j < a->width; j++)
+        {
+            int idx = i * a->width + j;
+            a->data[idx] += b->data[idx]; 
+        }
 }
 
 /*===========================================================================

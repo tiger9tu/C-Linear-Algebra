@@ -192,7 +192,7 @@ houseHolderFactor* makeHouseHolderFactor(int n){
 /* x = xscale*x + yscale* y*/
 void rescaleVecAdd(matrix* x, matrix*y, double xScale, double yScale){
     int length = x->height > x->width ? x->height : x->width;
-    for (size_t i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
         x->data[i] = xScale * x->data[i] + yScale*y->data[i]; 
     }
@@ -205,7 +205,6 @@ void Qc(matrix* v, double beta, matrix*c){
     double projLength = innerProductVector(v, c);
     rescaleVecAdd(c, v, 1, -beta * projLength);
 }
-
 
 
 void printTranspose(matrix* a){
@@ -223,11 +222,9 @@ houseHolderFactor* houseHolderQR(matrix* a){
     hhf->qrT = transposeMatrix(copyMatrix(a));
 
     matrix* xbuffer = makeMatrix(1, a->height);
-    for(int i = 0; i < 2; i++){
-        matrix* I = eyeMatrix(a->height - i);
-        matrix* vi = subVectorRef(hhf->qrT, i*hhf->qrT->width + i, (i+1)*hhf->qrT->width);
-
-        for (size_t l = 0; l < a->height - i; l++)
+    for(int i = 0; i < a->width; i++){
+        matrix* vi = subVectorRef(hhf->qrT, i*a->height + i, (i+1)*a->height);
+        for (int l = 0; l < a->height - i; l++)
         {
             xbuffer->data[l] = vi->data[l];
         }
@@ -235,81 +232,71 @@ houseHolderFactor* houseHolderQR(matrix* a){
         house(vi, &(hhf->betas[i]));
 
         // update the submatrix
-        for (size_t j = i + 1; j < a->width; j++)
+        for (int j = i + 1; j < a->width; j++)
         {
-            matrix* vj = subVectorRef(hhf->qrT, j*hhf->qrT->width + i, (j+1)*hhf->qrT->width);
+            matrix* vj = subVectorRef(hhf->qrT, j*a->height + i, (j+1)*a->height);
             Qc(vi, hhf->betas[i], vj);
         }
 
         // update the current column's top entry R(i, i)
         double vTc = 0;
-        for (size_t l = 0; l < a->height - i; l++)
+        for (int l = 0; l < a->height - i; l++)
         {
             vTc += xbuffer->data[l] * vi->data[l];
         }
         
         vi->data[0] = xbuffer->data[0] - hhf->betas[i] * vTc;
     }
-    
+
     return hhf;
 }
 
 
-matrix* removeV(houseHolderFactor* hhf, int vrank){
-    matrix* R = transposeMatrix(hhf->qrT);
-    for (size_t i = 0; i < vrank && i < hhf->qrT->width; i++)
+void getExplicitQRFromHouseholder(houseHolderFactor* hhf, matrix* Q, matrix* R){
+        for (int i = 0; i < a->width; i++)
     {
-        for (size_t j = i + 1; j < R->height; j++)
-        {
-            R->data[j * R->width + i] = 0;
-        }   
-    }
-    return R;
-}
-
-void restoreFromHouseholderFactor(houseHolderFactor* hhf){
-    matrix* a = transposeMatrix(hhf->qrT);
-    for (size_t i = 0; i < 2; i++)
-    {
-        for (size_t j = i + 1; j < a->height; j++)
+        for (int j = i + 1; j < a->height; j++)
         {
             a->data[j * a->width + i] = 0;
         }
     }
-    printf("a = \n");
-    printMatrix(a);
+}
+
+void restoreFromHouseholderFactor(houseHolderFactor* hhf){
+    matrix* a = transposeMatrix(hhf->qrT);
+    for (int i = 0; i < a->width; i++)
+    {
+        for (int j = i + 1; j < a->height; j++)
+        {
+            a->data[j * a->width + i] = 0;
+        }
+    }
+
     matrix* vs = copyMatrix(hhf->qrT);
-   for (size_t i = 0; i < vs->height; i++)
+   for (int i = 0; i < vs->height; i++)
     {
         vs->data[i * vs->width + i] = 1;
-        for (size_t j = 0; j < i; j++)
+        for (int j = 0; j < i; j++)
         {
             vs->data[i * vs->width + j] = 0;
         }
     }
 
     matrix* I = eyeMatrix(hhf->qrT->width);
-
-    for (int i =  1; i >=0; i--)
+    for (int i = a->width - 1; i >=0; i--)
     {
         matrix* aref = a;
         matrix* vi = subVectorRef(vs, i*vs->width, (i + 1)*vs->width);
-
-        printf("voi");
-        printMatrix(vi);
         matrix* vvT = multiplyMatrix(vi, transposeMatrix(vi));
         rescaleMatrix(vvT, - hhf->betas[i]); // T -> +
         matrix* Q = addMatrix(I, vvT);
         a = multiplyMatrix(Q, aref);
         freeMatrix(vvT);
         freeMatrix(Q);
-        printf("a in i = %d\n", i);
-printMatrix(a);
-
     }
    freeMatrix(I);
    freeMatrix(vs); 
-
+   printf("restored a : \n");
    printMatrix(a);
 
 }

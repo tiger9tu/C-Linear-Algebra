@@ -56,6 +56,7 @@ matrix* transposeMatrix(matrix* m);
 matrix* meanMatrix(matrix* m);
 matrix* multiplyMatrix(matrix* a, matrix* b);
 matrix* addMatrix(matrix*a, matrix* b);
+void plusMatrix(matrix* a, matrix* b);
 matrix* scaleMatrix(matrix* m, double value);
 matrix* covarianceMatrix(matrix* m);
 void rowSwap(matrix* a, int p, int q); // This method changes the input matrix.

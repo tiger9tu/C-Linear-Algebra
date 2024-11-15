@@ -1,6 +1,7 @@
 CC = /usr/bin/cc
 RM = /bin/rm
 CFLAGS = -O2
+DEBUG_FLAGS = -O0 -g  # Debug flags with no optimization and debug symbols
 
 # Define directories for build and binary files
 BUILD_DIR = build
@@ -12,8 +13,12 @@ LIBRARY = $(BUILD_DIR)/matrix.o $(BUILD_DIR)/L2_distance.o $(BUILD_DIR)/matrixad
 # Test executables in the bin directory
 TEST_APS = $(BIN_DIR)/qr_decomposition_test $(BIN_DIR)/invtest $(BIN_DIR)/eigen_test $(BIN_DIR)/quicksort_test $(BIN_DIR)/svd_test
 
-# Target: all
+# Default target: all
 all: $(BUILD_DIR) $(BIN_DIR) $(TEST_APS)
+
+# Debug target: builds with debug flags
+debug: CFLAGS += $(DEBUG_FLAGS)
+debug: clean all
 
 # Create build and bin directories if they don't exist
 $(BUILD_DIR):
