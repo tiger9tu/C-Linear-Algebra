@@ -43,6 +43,7 @@ void assert(int assertion, char* message);
 matrix* readMatrix(char* filename);
 matrix* makeMatrix(int width, int height);
 matrix* copyMatrix(matrix* m);
+void copyData(matrix* from, matrix* to);
 void freeMatrix(matrix* m);
 void writeMatrix(matrix* m, char* filename);
 void printMatrix(matrix* m);
@@ -66,5 +67,6 @@ matrix* dotDiagonalMatrix(matrix* a, matrix* b);
 matrix* L2_distance(matrix* a, matrix* b);
 matrix* subVectorRef(matrix *a, int s , int e);
 void rescaleMatrix(matrix* m, double scale);
+
 
 #endif

@@ -85,6 +85,14 @@ matrix* copyMatrix(matrix* m) {
     return scaleMatrix(m, 1);
 }
 
+
+void copyData(matrix* from, matrix* to){
+    assert(from->height == to->height && from->width == to->width, "copyData: matrices must have the same size");
+    for (size_t i = 0; i < from->height; i++)
+        for (size_t j = 0; j < from->width; j++)
+            to->data[i * to->width + j] = from->data[i * to->width + j];
+}
+
 /*===========================================================================
  * freeMatrix
  * Frees the resources of a matrix
@@ -316,14 +324,6 @@ matrix* multiplyMatrix(matrix* a, matrix* b) {
     return out;
 }
 
-void timesMatrix(matrix* a, matrix*b){
-    matrix* tmp = multiplyMatrix(a, b);
-    matrix* adata = a->data;
-    a->width = tmp->width;
-    a->height = tmp->height;
-    a->data = tmp->data;
-    free(a->data);
-}
 
 matrix* addMatrix(matrix*a, matrix* b){
 

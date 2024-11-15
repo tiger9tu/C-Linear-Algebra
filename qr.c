@@ -181,8 +181,6 @@ void house(matrix* v, double* beta){
 }
 
 
-
-
 houseHolderFactor* makeHouseHolderFactor(int n){
     houseHolderFactor* out = (houseHolderFactor*) malloc(sizeof(houseHolderFactor));
     out->betas = (double*) malloc(sizeof(double) * (n));
@@ -253,50 +251,44 @@ houseHolderFactor* houseHolderQR(matrix* a){
 
 
 void getExplicitQRFromHouseholder(houseHolderFactor* hhf, matrix* Q, matrix* R){
-        for (int i = 0; i < a->width; i++)
+    
+    for (int i = 0; i < R->height; i++)
     {
-        for (int j = i + 1; j < a->height; j++)
+        for (int j = i; j < R->width; j++)
         {
-            a->data[j * a->width + i] = 0;
-        }
-    }
-}
-
-void restoreFromHouseholderFactor(houseHolderFactor* hhf){
-    matrix* a = transposeMatrix(hhf->qrT);
-    for (int i = 0; i < a->width; i++)
-    {
-        for (int j = i + 1; j < a->height; j++)
-        {
-            a->data[j * a->width + i] = 0;
+            R->data[i * R->width + j] = hhf->qrT->data[j *hhf->qrT->width + i];
         }
     }
 
-    matrix* vs = copyMatrix(hhf->qrT);
-   for (int i = 0; i < vs->height; i++)
+    matrix* I = eyeMatrix(Q->width);
+    // initialize Q as Im
+    plusMatrix(Q, I);
+    for (size_t i = 0; i < R->width; i++)
     {
-        vs->data[i * vs->width + i] = 1;
-        for (int j = 0; j < i; j++)
+        // this part can be replaced by implicit opeartions,
+        // which would be more memory efficient
+        matrix* vi = subVectorRef(hhf->qrT, i*hhf->qrT->width,(i + 1)*hhf->qrT->width);
+        
+        for (size_t k = 0; k < i; k++)
         {
-            vs->data[i * vs->width + j] = 0;
+            vi->data[k] = 0;
         }
-    }
+        
+        vi->data[i] = 1;
+        matrix* viT = transposeMatrix(vi);
+        matrix* betaviviT = multiplyMatrix(vi, viT);
+        rescaleMatrix(betaviviT, -hhf->betas[i]);
+        
+        matrix* Qi = addMatrix(I, betaviviT);
+        // timesMatrix(Q, I);
+        matrix* QQi = multiplyMatrix(Q, Qi);
+        copyData(QQi, Q);
 
-    matrix* I = eyeMatrix(hhf->qrT->width);
-    for (int i = a->width - 1; i >=0; i--)
-    {
-        matrix* aref = a;
-        matrix* vi = subVectorRef(vs, i*vs->width, (i + 1)*vs->width);
-        matrix* vvT = multiplyMatrix(vi, transposeMatrix(vi));
-        rescaleMatrix(vvT, - hhf->betas[i]); // T -> +
-        matrix* Q = addMatrix(I, vvT);
-        a = multiplyMatrix(Q, aref);
-        freeMatrix(vvT);
-        freeMatrix(Q);
+        freeMatrix(viT);
+        freeMatrix(betaviviT);
+        freeMatrix(Qi);
+        freeMatrix(QQi);
     }
-   freeMatrix(I);
-   freeMatrix(vs); 
-   printf("restored a : \n");
-   printMatrix(a);
-
+    freeMatrix(I);
+    
 }

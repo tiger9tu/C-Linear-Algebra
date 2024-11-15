@@ -10,5 +10,5 @@ matrix* unitVectorRows(matrix* a);
 matrix* unitVectorColumns(matrix* a);
 void house( matrix* v, double* beta);
 houseHolderFactor* houseHolderQR(matrix* a);
-void restoreFromHouseholderFactor(houseHolderFactor* hhf);
+void getExplicitQRFromHouseholder(houseHolderFactor* hhf, matrix* Q, matrix* R);
 #endif
