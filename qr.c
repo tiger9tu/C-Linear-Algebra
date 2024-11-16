@@ -303,7 +303,7 @@ void getExplicitQRFromHouseholder(houseHolderFactor *hhf, matrix **q,
     matrix *Qi = addMatrix(I, betaviviT);
     // timesMatrix(Q, I);
     matrix *QQi = multiplyMatrix((*q), Qi);
-    copyData(QQi, (*q));
+    copyData(QQi, (*q), 0, QQi->height, 0, QQi->width);
 
     freeMatrix(viT);
     freeMatrix(betaviviT);

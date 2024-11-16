@@ -83,12 +83,13 @@ matrix *makeMatrix(int width, int height) {
  *=========================================================================*/
 matrix *copyMatrix(matrix *m) { return scaleMatrix(m, 1); }
 
-void copyData(matrix *from, matrix *to) {
-  assert(from->height == to->height && from->width == to->width,
-         "copyData: matrices must have the same size");
-  for (size_t i = 0; i < from->height; i++)
-    for (size_t j = 0; j < from->width; j++)
-      to->data[i * to->width + j] = from->data[i * to->width + j];
+void copyData(matrix *from, matrix *to, int startRow, int endRow, int startCol,
+              int endCol) {
+  //   assert(from->height == to->height && from->width == to->width,
+  //          "copyData: matrices must have the same size");
+  for (size_t i = startRow; i < endRow; i++)
+    for (size_t j = startCol; j < endCol; j++)
+      to->data[i * to->width + j] = from->data[i * from->width + j];
 }
 
 /*===========================================================================
@@ -146,7 +147,7 @@ void printMatrix(matrix *m) {
   for (i = 0; i < m->height; i++) {
     for (j = 0; j < m->width; j++) {
       // printf(" %9.6f", *(ptr++));
-      printf(" %.17f", m->data[i * m->width + j]);
+      printf(" %.6f", m->data[i * m->width + j]);
     }
     printf("\n");
   }

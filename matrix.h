@@ -43,7 +43,8 @@ void assert(int assertion, char *message);
 matrix *readMatrix(char *filename);
 matrix *makeMatrix(int width, int height);
 matrix *copyMatrix(matrix *m);
-void copyData(matrix *from, matrix *to);
+void copyData(matrix *from, matrix *to, int startRow, int endRow, int startCol,
+              int endCol);
 void freeMatrix(matrix *m);
 void writeMatrix(matrix *m, char *filename);
 void printMatrix(matrix *m);

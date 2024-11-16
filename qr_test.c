@@ -6,57 +6,6 @@
 #include <stdio.h>
 #include <time.h>
 
-void a_b_(matrix *a) {
-  printf("The original matrix A:\n");
-  printMatrix(a);
-  // gram-schimit decomposition
-  matrix *gramSchimidtQ = NULL;
-  matrix *gramSchimidtR = NULL;
-
-  naive_gram_schmidt(a, &gramSchimidtQ, &gramSchimidtR);
-  printf("The gram schimidt decomposition:");
-  printf("Q: \n");
-  printMatrix(gramSchimidtQ);
-  printf("R: \n");
-  printMatrix(gramSchimidtR);
-
-  houseHolderFactor *hhf = houseHolderQR(a);
-  matrix *houseHolderQ = NULL;
-  matrix *houseHolderR = NULL;
-  getExplicitQRFromHouseholder(hhf, &houseHolderQ, &houseHolderR);
-  printf("The Householder decomposition:");
-  printf("Q: \n");
-  printMatrix(houseHolderQ);
-  printf("R: \n");
-  printMatrix(houseHolderR);
-  printf("\n\n\n");
-}
-
-void c_(houseHolderFactor *hhf, matrix *x, matrix *y) {
-  matrix *r = NULL;
-  matrix *q = NULL;
-
-  getExplicitQRFromHouseholder(hhf, &q, &r);
-  printf("Q: \n");
-  printMatrix(q);
-
-  printf("x: \n");
-  printMatrix(x);
-  printf("explicit computation of QX: \n");
-  printMatrix(multiplyMatrix(q, x));
-  printf("Implicit computation of Qx: \n");
-  implilcitQx(hhf, x);
-  printMatrix(x);
-
-  printf("\ny: \n");
-  printMatrix(y);
-  printf("explicit computation of QTy: \n");
-  printMatrix(multiplyMatrix(transposeMatrix(q), y));
-  printf("implicit computation of QTy: \n");
-  implilcitQTx(hhf, y);
-  printMatrix(y);
-}
-
 // Function to generate a random upper triangular matrix of size n x n
 void generateRandomUpperTriangularSquareMatrix(int n, matrix **r,
                                                gsl_matrix **gsl_r) {
@@ -152,6 +101,157 @@ double giveError(matrix *a, matrix *aHat) {
   double relativeError = error / normA;
 
   return relativeError;
+}
+
+matrix *generateVandMatrix(int m, int n) {
+  matrix *A = makeMatrix(n, m);
+  for (int i = 0; i < m; i++) {
+    double alpha_i = (double)i / (m - 1);
+    for (int j = 0; j < n; j++) {
+      set_element(A, i, j, pow(alpha_i, j));
+    }
+  }
+  return A;
+}
+
+// Function to generate vector b
+matrix *generateVandVec(int m) {
+  matrix *b = makeMatrix(1, m);
+  for (int i = 0; i < m; i++) {
+    double alpha_i = (double)i / (m - 1);
+    set_element(b, i, 0, exp(sin(4 * alpha_i)));
+  }
+  return b;
+}
+
+matrix *solveSystemR(matrix *R, matrix *b) {
+  int n = R->width;
+  matrix *x = makeMatrix(1, n);
+
+  for (int i = n - 1; i >= 0; i--) {
+    double sum = 0.0;
+    for (int j = i + 1; j < n; j++) {
+      sum += get_element(R, i, j) * get_element(x, j, 0);
+    }
+    double value;
+    double pivot = get_element(R, i, i);
+    if (pivot == 0) {
+      value = 0;
+    } else {
+      value = (get_element(b, i, 0) - sum) / pivot;
+    }
+    set_element(x, i, 0, value);
+  }
+
+  return x;
+}
+
+gsl_matrix *getGslFromNormal(matrix *a) {
+  gsl_matrix *gsla = gsl_matrix_alloc(a->height, a->width);
+  for (size_t i = 0; i < a->height; i++) {
+    for (size_t j = 0; j < a->width; j++) {
+      gsl_matrix_set(gsla, i, j, a->data[i * a->width + j]);
+    }
+  }
+  return gsla;
+}
+
+void solve_linear_system(const gsl_matrix *A, const gsl_vector *b,
+                         gsl_vector *x) {
+  // A: Coefficient matrix (input)
+  // b: Right-hand side vector (input)
+  // x: Solution vector (output)
+
+  // Make a copy of the input matrix A because LU decomposition modifies the
+  // matrix
+  gsl_matrix *LU = gsl_matrix_alloc(A->size1, A->size2);
+  gsl_matrix_memcpy(LU, A);
+
+  // Create a permutation object for row exchanges during LU decomposition
+  gsl_permutation *perm = gsl_permutation_alloc(A->size1);
+  int signum;
+  // Perform LU decomposition of A
+  gsl_linalg_LU_decomp(LU, perm, &signum);
+
+  // Solve the system Ax = b using the LU decomposition
+  gsl_linalg_LU_solve(LU, perm, b, x);
+
+  // Free allocated memory
+  gsl_matrix_free(LU);
+  gsl_permutation_free(perm);
+}
+
+void usinggslSolveNormalEqu(matrix *A, matrix *b) {
+  gsl_matrix *gslA = getGslFromNormal(A);
+  gsl_vector *gsl_b = gsl_vector_alloc(b->height);
+  for (size_t i = 0; i < b->height; i++) {
+    gsl_vector_set(gsl_b, i, b->data[i]);
+  }
+
+  gsl_matrix *gslATA = gsl_matrix_alloc(A->width, A->width);
+  gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, gslA, gslA, 0.0, gslATA);
+  gsl_matrix *gslATb = gsl_vector_alloc(A->width);
+  gsl_blas_dgemv(CblasTrans, 1.0, gslA, gsl_b, 0.0, gslATb);
+
+  gsl_vector *x = gsl_vector_alloc(gslA->size2);
+
+  // solve ATAx = ATb:
+  solve_linear_system(gslATA, gslATb, x);
+
+  for (size_t i = 0; i < x->size; ++i) {
+    printf("v[%d] = %lf\n", i, gsl_vector_get(x, i));
+  }
+}
+
+void a_b_(matrix *a) {
+  printf("The original matrix A:\n");
+  printMatrix(a);
+  // gram-schimit decomposition
+  matrix *gramSchimidtQ = NULL;
+  matrix *gramSchimidtR = NULL;
+
+  naive_gram_schmidt(a, &gramSchimidtQ, &gramSchimidtR);
+  printf("The gram schimidt decomposition:");
+  printf("Q: \n");
+  printMatrix(gramSchimidtQ);
+  printf("R: \n");
+  printMatrix(gramSchimidtR);
+
+  houseHolderFactor *hhf = houseHolderQR(a);
+  matrix *houseHolderQ = NULL;
+  matrix *houseHolderR = NULL;
+  getExplicitQRFromHouseholder(hhf, &houseHolderQ, &houseHolderR);
+  printf("The Householder decomposition:");
+  printf("Q: \n");
+  printMatrix(houseHolderQ);
+  printf("R: \n");
+  printMatrix(houseHolderR);
+  printf("\n\n\n");
+}
+
+void c_(houseHolderFactor *hhf, matrix *x, matrix *y) {
+  matrix *r = NULL;
+  matrix *q = NULL;
+
+  getExplicitQRFromHouseholder(hhf, &q, &r);
+  printf("Q: \n");
+  printMatrix(q);
+
+  printf("x: \n");
+  printMatrix(x);
+  printf("explicit computation of QX: \n");
+  printMatrix(multiplyMatrix(q, x));
+  printf("Implicit computation of Qx: \n");
+  implilcitQx(hhf, x);
+  printMatrix(x);
+
+  printf("\ny: \n");
+  printMatrix(y);
+  printf("explicit computation of QTy: \n");
+  printMatrix(multiplyMatrix(transposeMatrix(q), y));
+  printf("implicit computation of QTy: \n");
+  implilcitQTx(hhf, y);
+  printMatrix(y);
 }
 
 void d_() {
@@ -268,133 +368,37 @@ void d_() {
   // gsl_linalg_QR_decomp_r()
 }
 
-matrix *generateVandMatrix(int m, int n) {
-  matrix *A = makeMatrix(n, m);
-  for (int i = 0; i < m; i++) {
-    double alpha_i = (double)i / (m - 1);
-    for (int j = 0; j < n; j++) {
-      set_element(A, i, j, pow(alpha_i, j));
-    }
-  }
-  return A;
-}
-
-// Function to generate vector b
-matrix *generateVandVec(int m) {
-  matrix *b = makeMatrix(1, m);
-  for (int i = 0; i < m; i++) {
-    double alpha_i = (double)i / (m - 1);
-    set_element(b, i, 0, exp(sin(4 * alpha_i)));
-  }
-  return b;
-}
-
-matrix *solveSystemR(matrix *R, matrix *b) {
-  int n = R->width;
-  matrix *x = makeMatrix(1, n);
-
-  for (int i = n - 1; i >= 0; i--) {
-    double sum = 0.0;
-    for (int j = i + 1; j < n; j++) {
-      sum += get_element(R, i, j) * get_element(x, j, 0);
-    }
-    double value = (get_element(b, i, 0) - sum) / get_element(R, i, i);
-    set_element(x, i, 0, value);
-  }
-
-  return x;
-}
-
-gsl_matrix *getGslFromNormal(matrix *a) {
-  gsl_matrix *gsla = gsl_matrix_alloc(a->height, a->width);
-  for (size_t i = 0; i < a->height; i++) {
-    for (size_t j = 0; j < a->width; j++) {
-      gsl_matrix_set(gsla, i, j, a->data[i * a->width + j]);
-    }
-  }
-  return gsla;
-}
-
-void solve_linear_system(const gsl_matrix *A, const gsl_vector *b,
-                         gsl_vector *x) {
-  // A: Coefficient matrix (input)
-  // b: Right-hand side vector (input)
-  // x: Solution vector (output)
-
-  // Make a copy of the input matrix A because LU decomposition modifies the
-  // matrix
-  gsl_matrix *LU = gsl_matrix_alloc(A->size1, A->size2);
-  gsl_matrix_memcpy(LU, A);
-
-  // Create a permutation object for row exchanges during LU decomposition
-  gsl_permutation *perm = gsl_permutation_alloc(A->size1);
-  int signum;
-  // Perform LU decomposition of A
-  gsl_linalg_LU_decomp(LU, perm, &signum);
-
-  // Solve the system Ax = b using the LU decomposition
-  gsl_linalg_LU_solve(LU, perm, b, x);
-
-  // Free allocated memory
-  gsl_matrix_free(LU);
-  gsl_permutation_free(perm);
-}
-
-void usinggslSolveNormalEqu(matrix *A, matrix *b) {
-  gsl_matrix *gslA = getGslFromNormal(A);
-  gsl_vector *gsl_b = gsl_vector_alloc(b->height);
-  for (size_t i = 0; i < b->height; i++) {
-    gsl_vector_set(gsl_b, i, b->data[i]);
-  }
-
-  gsl_matrix *gslATA = gsl_matrix_alloc(A->width, A->width);
-  gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, gslA, gslA, 0.0, gslATA);
-  gsl_matrix *gslATb = gsl_vector_alloc(A->width);
-  gsl_blas_dgemv(CblasTrans, 1.0, gslA, gsl_b, 0.0, gslATb);
-
-  gsl_vector *x = gsl_vector_alloc(gslA->size2);
-
-  // solve ATAx = ATb:
-  solve_linear_system(gslATA, gslATb, x);
-
-  for (size_t i = 0; i < x->size; ++i) {
-    printf("v[%d] = %lf\n", i, gsl_vector_get(x, i));
-  }
-}
-
 void e_() {
   int m = 100;
   int n = 15;
   matrix *A = generateVandMatrix(m, n);
   matrix *b = generateVandVec(m);
 
+  // (i)
   houseHolderFactor *hhf = houseHolderQR(A);
-  implilcitQTx(hhf, b); // now b is Qtb
-  matrix *x = solveSystemR(transposeMatrix(hhf->qrT) /* same effect as R*/, b);
-  printMatrix(x);
-  //   for (size_t i = n; i < m; i++) {
-  //     b->data[i] = 0; // those entires are small
-  //   }
-
-  //   solve Rx = QTb
-  //   matrix *R = NULL;
-  //   matrix *Q = NULL;
-  //   //   //   printMatrix(hhf->qrT);
-  //   getExplicitQRFromHouseholder(hhf, &Q, &R);
-
-  //   matrix *QR = multiplyMatrix(Q, R);
-  //   matrixMinus(QR, A);
-
-  //   matrix *xr = solveSystemR(R, b); // the upper tranangle part of hhf->qrT
-  //   is
-
-  //   matrix *x = solveSystemR(transposeMatrix(hhf->qrT), b);
+  matrix *b1 = copyMatrix(b);
+  implilcitQTx(hhf, b1); // now b is Qtb
+  matrix *x = solveSystemR(transposeMatrix(hhf->qrT) /* same effect as R*/, b1);
   //   printMatrix(x);
-  //   printMatrix(xr);
-  //   matrix *Rx = multiplyMatrix(R, x);
-  //   matrixMinus(Rx, b);
-  //   printMatrix(Rx);
-  //   usinggslSolveNormalEqu(A, b);
+  printf("The (i) gives result c14 = %.17f\n\n", x->data[14]);
+
+  // (ii)
+  matrix *augAb = makeMatrix(A->width + 1, A->height);
+  copyData(A, augAb, 0, A->height, 0, A->width);
+  for (size_t i = 0; i < b->height; i++)
+    augAb->data[(i + 1) * augAb->width - 1] = b->data[i];
+
+  houseHolderFactor *aughhf = houseHolderQR(augAb);
+  matrix *qr = transposeMatrix(aughhf->qrT);
+  //   printf("qr->width = %d, qr->height = %d\n", qr->width, qr->height);
+  matrix *Rnn = makeMatrix(n, n);
+  copyData(qr, Rnn, 0, n, 0, n);
+  matrix *Rnplus1 = makeMatrix(1, n);
+  for (size_t i = 0; i < n; i++)
+    Rnplus1->data[i] = qr->data[(i + 1) * (n + 1) - 1];
+
+  matrix *x2 = solveSystemR(Rnn, Rnplus1);
+  printf("The (ii) gives result c14 = %.17f\n\n", x->data[14]);
 }
 
 int main(int argc, char **argv) {
