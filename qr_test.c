@@ -142,72 +142,141 @@ double calculateGslFrobeniusNorm(gsl_matrix* a) {
     return sqrt(norm);
 }
 
+
+double giveError(matrix* a, matrix* aHat){
+    double normA = calculateFrobeniusNorm(a);
+    matrix* aMinusAHat = makeMatrix(a->width, a->height);
+    matrixAdd(aMinusAHat, a);
+    matrixMinus(aMinusAHat, aHat);
+    double error = calculateFrobeniusNorm(aMinusAHat);
+    double relativeError = error / normA;
+
+    return relativeError;
+
+}
+
 void d_(){
-    int n = 3;
 
-    // setting up the random sample 
-    matrix* r = NULL;
-    matrix* b = NULL;
+    size_t tries = 1;
+    FILE *file = fopen("output.txt", "w");
+    for(int n = 5; n <= 100 ; n++){
+        double hhER = 0;
+        double hhEQ = 0;
+        double hhEQR = 0;
+        double hhEQQ = 0;
+        double gsER = 0;
+        double gsEQ = 0;
+        double gsEQR = 0;
+        double gsEQQ = 0;
+        for (size_t try = 0; try < tries; try++)
+        {
+                // setting up the random sample 
+            matrix* r = NULL;
+            matrix* b = NULL;
 
-    gsl_matrix *gsl_r = NULL;
-    gsl_matrix *gsl_b = NULL;
+            gsl_matrix *gsl_r = NULL;
+            gsl_matrix *gsl_b = NULL;
 
-    generateRandomUpperTriangularSquareMatrix(n, &r, &gsl_r);
-    generateRandomSquareMatrix(n, &b, &gsl_b);
-    printMatrix(r);
-    printf("gsl_r: \n");
-    printGslMatrix(gsl_r);
+            generateRandomUpperTriangularSquareMatrix(n, &r, &gsl_r);
+            generateRandomSquareMatrix(n, &b, &gsl_b);
 
-    gsl_matrix *gsl_t = gsl_matrix_alloc(n,n);
-    gsl_linalg_QR_decomp_r(gsl_b, gsl_t);
+            gsl_matrix *gsl_t = gsl_matrix_alloc(n,n);
+            gsl_linalg_QR_decomp_r(gsl_b, gsl_t);
 
-    gsl_matrix* gsl_bq = gsl_matrix_alloc(n,n);
-    gsl_matrix* gsl_br = gsl_matrix_alloc(n,n);
+            gsl_matrix* gsl_bq = gsl_matrix_alloc(n,n);
+            gsl_matrix* gsl_br = gsl_matrix_alloc(n,n);
 
-    gsl_linalg_QR_unpack_r(gsl_b, gsl_t,gsl_bq,gsl_br);
-
-    printf("gsl_bq: \n");
-    printGslMatrix(gsl_bq);
-
-    gsl_matrix* gsl_a = gsl_matrix_alloc(n,n);
-    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, gsl_bq, gsl_r, 0.0 , gsl_a);
-    printf("gsl_a: \n");
-    printGslMatrix(gsl_a);
-    matrix* a = makeMatrix(n,n);
-    getNormalMatrixFromGsl(a, gsl_a);
-    printMatrix(a);
-
-    // my QR decomposition
-    houseHolderFactor* hhf = houseHolderQR(a);
-    matrix* q;
-    // matrix* r;
-    getExplicitQRFromHouseholder(hhf, &q, &r);
-    // error R
-    // double myErrorR = calculateFrobeniusNorm();
+            gsl_linalg_QR_unpack_r(gsl_b, gsl_t,gsl_bq,gsl_br);
 
 
+            matrix* q = makeMatrix(n,n);
+            getNormalMatrixFromGsl(q, gsl_bq);
+
+            gsl_matrix* gsl_a = gsl_matrix_alloc(n,n);
+            gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, gsl_bq, gsl_r, 0.0 , gsl_a);
+            matrix* a = makeMatrix(n,n);
+            getNormalMatrixFromGsl(a, gsl_a);
+
+            // gsl_matrix* gsl_at = gsl_matrix_alloc(n,n);
+            // gsl_matrix* gsl_a = gsl_linalg_QR_decomp_r(gsl_a, gsl_at);
+            // gsl_matrix* gsl_q = gsl_matrix_alloc(n,n);
+            // gsl_matrix* gsl_r = gsl_matrix_alloc(n,n);
+            // gsl_linalg_QR_unpack_r(gsl_a, gsl_at,gsl_q,gsl_r);
+
+
+            // my QR decomposition
+            houseHolderFactor* hhf = houseHolderQR(a);
+            matrix* myq = NULL;
+            matrix* myr = NULL;
+            getExplicitQRFromHouseholder(hhf, &myq, &myr);
+            // getNormalMatrixFromGsl(myq, gsl_q);
+            // getNormalMatrixFromGsl(myr, gsl_r);
+
+            // error R
+            // printf("R error of the Householder:\n");
+            hhER += giveError(r, myr);
+
+
+            // error type 2
+            hhEQ += giveError(q, myq);
+
+            //error type 3
+            // printf("QR error of the Householder:\n");
+            hhEQR += giveError(a, multiplyMatrix(myq,myr));
+
+            //error type 4
+            // printf("QTQ error of the Householder:\n");
+            hhEQQ += giveError(eyeMatrix(n), multiplyMatrix(transposeMatrix(myq),myq));
+
+            // printf("\n\n\n");
+
+            // gramSchmidt
+            matrix* gramschmidtq = NULL;
+            matrix* gramschmidtr = NULL;
+            gram_schmidt(a, &gramschmidtq, &gramschmidtr);
+            // double normR = calculateFrobeniusNorm(r);
+            // printf("R error of the Gram Schimidt:\n");
+            gsER += giveError(r,gramschmidtr);
+
+            // error type 2
+            // printf("Q error of the Gram Schimidt.\n");
+            gsEQ += giveError(q, gramschmidtq);
+
+            //error type 3
+            // printf("QR error of the Gram Schimidt:\n");
+            gsEQR += giveError(a, multiplyMatrix(gramschmidtq,gramschmidtr));
+ 
+            //error type 4
+            // printf("QTQ error of the Gram Schimidt:\n");
+            gsEQQ += giveError(eyeMatrix(n), multiplyMatrix(transposeMatrix(gramschmidtq),gramschmidtq));
+            // fprintf(file, "\n");
+        }
+        fprintf(file, "%lf %lf %lf %lf ", hhER / tries, hhEQ / tries, hhEQR / tries, hhEQQ / tries);
+        fprintf(file, "%lf %lf %lf %lf\n", gsER / tries, gsEQ / tries, gsEQR / tries, gsEQQ / tries);
+
+    }
     
     // gsl_linalg_QR_decomp_r()
 }
 
 
 int main(int argc, char** argv) {
-    matrix* a = makeMatrix(3,4);
-    for (int i = 0; i < a->height; i++)
-        for (int j = 0; j < a->width; j++)
-            a->data[i*3 + j] = i*3 + j;
+    // matrix* a = makeMatrix(3,4);
+    // for (int i = 0; i < a->height; i++)
+    //     for (int j = 0; j < a->width; j++)
+    //         a->data[i*3 + j] = i*3 + j;
 
-    // a_b_(a); 
+    // // a_b_(a); 
 
-    matrix* x = makeMatrix(1, 4);
-    for (size_t i = 0; i < x->height; i++)
-        x->data[i] = i + 1;
+    // matrix* x = makeMatrix(1, 4);
+    // for (size_t i = 0; i < x->height; i++)
+    //     x->data[i] = i + 1;
     
-    matrix* y = copyMatrix(x);
+    // matrix* y = copyMatrix(x);
 
-    c_(houseHolderQR(a),x, y);
+    // c_(houseHolderQR(a),x, y);
 
-    // d_();
+    d_();
 
     return 0;
 }

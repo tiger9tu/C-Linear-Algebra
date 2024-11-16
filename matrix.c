@@ -541,3 +541,11 @@ void rescaleMatrixAdd(matrix* x, matrix*y, double xScale, double yScale){
         }
     }
 }
+
+void matrixAdd(matrix* x ,matrix* y){
+    rescaleMatrixAdd(x, y , 1, 1);
+}
+
+void matrixMinus(matrix* x ,matrix* y){
+    rescaleMatrixAdd(x, y , 1, -1);
+}
