@@ -67,6 +67,6 @@ matrix* dotDiagonalMatrix(matrix* a, matrix* b);
 matrix* L2_distance(matrix* a, matrix* b);
 matrix* subVectorRef(matrix *a, int s , int e);
 void rescaleMatrix(matrix* m, double scale);
-
+void rescaleMatrixAdd(matrix* x, matrix*y, double xScale, double yScale);
 
 #endif

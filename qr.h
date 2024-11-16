@@ -10,5 +10,7 @@ matrix* unitVectorRows(matrix* a);
 matrix* unitVectorColumns(matrix* a);
 void house( matrix* v, double* beta);
 houseHolderFactor* houseHolderQR(matrix* a);
-void getExplicitQRFromHouseholder(houseHolderFactor* hhf, matrix* Q, matrix* R);
+void getExplicitQRFromHouseholder(houseHolderFactor* hhf, matrix** q, matrix** r);
+void implilcitQx(houseHolderFactor* hhf, matrix* x);
+void implilcitQTx(houseHolderFactor* hhf, matrix* x);
 #endif

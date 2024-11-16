@@ -529,3 +529,15 @@ matrix* dotDiagonalMatrix(matrix* a, matrix* b) {
 
     return out;
 }
+
+/* x = xscale*x + yscale* y*/
+void rescaleMatrixAdd(matrix* x, matrix*y, double xScale, double yScale){
+    // int length = x->height > x->width ? x->height : x->width;
+    for (int i = 0; i < x->height; i++)
+    {
+        for (size_t j = 0; j < x->width; j++)
+        {
+             x->data[i*x->width + j] = xScale * x->data[i*x->width + j] + yScale*y->data[i*x->width + j]; 
+        }
+    }
+}
