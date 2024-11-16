@@ -245,7 +245,7 @@ houseHolderFactor* houseHolderQR(matrix* a){
     hhf->qrT = transposeMatrix(copyMatrix(a));
 
     matrix* xbuffer = makeMatrix(1, a->height);
-    for(int i = 0; i < a->width; i++){
+    for(int i = 0; i < a->width - 1; i++){
         matrix* vi = subVectorRef(hhf->qrT, i*a->height + i, (i+1)*a->height);
         for (int l = 0; l < a->height - i; l++)
         {
@@ -324,3 +324,62 @@ void getExplicitQRFromHouseholder(houseHolderFactor* hhf, matrix** q, matrix** r
     freeMatrix(I);
     
 }
+
+
+
+void naive_gram_schmidt(matrix* a, matrix** q, matrix** r) {
+    int i, j;
+    double norm;
+    double* qPtr;
+    double* aPtr;
+    double* rPtr;
+
+    // assert that q and r matrices are initialized to NULL
+    // assert(*q == NULL && *r == NULL);
+
+    // Allocate Q and R matrices
+    *q = makeMatrix(a->width, a->height);
+    *r = makeMatrix(a->width, a->height);
+
+    // Perform Gram-Schmidt Process
+    for (j = 0; j < a->width; j++) {
+        // Step 1: Set q_j = a_j (copy column j of a into q)
+        qPtr = (*q)->data + j;
+        aPtr = a->data + j;
+        for (i = 0; i < a->height; i++) {
+            *qPtr = *aPtr;
+            qPtr += (*q)->width;
+            aPtr += a->width;
+        }
+
+        // Step 2: Orthogonalize column j against all previous columns
+        for (i = 0; i < j; i++) {
+            // Compute R(i, j) = dot product of q_i and a_j
+            double r_ij = dotProduct((*q)->data + i, a->data + j, a->height, (*q)->width, a->width);
+            rPtr = (*r)->data + (i * (*r)->width) + j;
+            *rPtr = r_ij;
+
+            // Subtract projection from q_j
+            qPtr = (*q)->data + j;
+            double* q_iPtr = (*q)->data + i;
+            for (int k = 0; k < a->height; k++) {
+                *qPtr -= (*q_iPtr) * r_ij;
+                qPtr += (*q)->width;
+                q_iPtr += (*q)->width;
+            }
+        }
+
+        // Step 3: Normalize q_j and set R(j, j)
+        norm = sqrt(dotProduct((*q)->data + j, (*q)->data + j, a->height, (*q)->width, (*q)->width));
+        rPtr = (*r)->data + (j * (*r)->width) + j;
+        *rPtr = norm;
+
+        // Divide q_j by its norm to normalize it
+        qPtr = (*q)->data + j;
+        for (i = 0; i < a->height; i++) {
+            *qPtr = (norm == 0 ? 0 : *qPtr / norm);
+            qPtr += (*q)->width;
+        }
+    }
+}
+

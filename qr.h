@@ -5,7 +5,7 @@ typedef struct {
     double* betas;
     matrix* qrT;
 }houseHolderFactor;
-void gram_schmidt(matrix* a, matrix** q, matrix** r);
+void naive_gram_schmidt(matrix* a, matrix** q, matrix** r);
 matrix* unitVectorRows(matrix* a);
 matrix* unitVectorColumns(matrix* a);
 void house( matrix* v, double* beta);

@@ -70,4 +70,6 @@ void rescaleMatrix(matrix* m, double scale);
 void rescaleMatrixAdd(matrix* x, matrix*y, double xScale, double yScale);
 void matrixAdd(matrix* x, matrix*y );
 void matrixMinus(matrix* x, matrix*y );
+
+double dotProduct(const double* a, const double* b, int length, int strideA, int strideB);
 #endif

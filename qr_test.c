@@ -14,7 +14,7 @@ void a_b_(matrix* a){
     matrix* gramSchimidtQ =NULL;
     matrix* gramSchimidtR= NULL;
 
-    gram_schmidt(a, &gramSchimidtQ,&gramSchimidtR);
+    naive_gram_schmidt(a, &gramSchimidtQ,&gramSchimidtR);
     printf("The gram schimidt decomposition:");
     printf("Q: \n");
     printMatrix(gramSchimidtQ);
@@ -159,7 +159,7 @@ void d_(){
 
     size_t tries = 1;
     FILE *file = fopen("output.txt", "w");
-    for(int n = 5; n <= 100 ; n++){
+    for(int n = 1; n <= 15 ; n++){
         double hhER = 0;
         double hhEQ = 0;
         double hhEQR = 0;
@@ -215,6 +215,15 @@ void d_(){
             // error R
             // printf("R error of the Householder:\n");
             hhER += giveError(r, myr);
+            if(hhER > 0.5 ){
+                printf("hhER too large, r = \n");
+                printMatrix(r);
+                printf("my r : \n");
+                printMatrix(myr);
+
+                printf("a : \n");
+                printMatrix(a);
+            }
 
 
             // error type 2
@@ -233,7 +242,7 @@ void d_(){
             // gramSchmidt
             matrix* gramschmidtq = NULL;
             matrix* gramschmidtr = NULL;
-            gram_schmidt(a, &gramschmidtq, &gramschmidtr);
+            naive_gram_schmidt(a, &gramschmidtq, &gramschmidtr);
             // double normR = calculateFrobeniusNorm(r);
             // printf("R error of the Gram Schimidt:\n");
             gsER += giveError(r,gramschmidtr);
@@ -276,7 +285,31 @@ int main(int argc, char** argv) {
 
     // c_(houseHolderQR(a),x, y);
 
-    d_();
+    // d_();
+
+    matrix* a = readMatrix("in1.txt");
+    // printMatrix(a);
+    houseHolderFactor* hhf = houseHolderQR(a);
+    printMatrix(hhf->qrT);
+
+    matrix* hhq = NULL;
+    matrix* hhr = NULL;
+    getExplicitQRFromHouseholder(hhf,&hhq,&hhr);
+    printf("hhr :\n");
+    printMatrix(hhr);
+
+    matrix* gsq = NULL;
+    matrix* gsr = NULL;
+    gram_schmidt(a, &gsq, &gsr);
+    printf("gsr: \n");
+    printMatrix(gsr);
+
+
+
+    // Free allocated matrices
+    // freeMatrix(a);
+    // freeMatrix(q);
+    // freeMatrix(r);
 
     return 0;
 }

@@ -549,3 +549,13 @@ void matrixAdd(matrix* x ,matrix* y){
 void matrixMinus(matrix* x ,matrix* y){
     rescaleMatrixAdd(x, y , 1, -1);
 }
+
+double dotProduct(const double* a, const double* b, int length, int strideA, int strideB) {
+    double sum = 0.0;
+    for (int i = 0; i < length; i++) {
+        sum += (*a) * (*b);
+        a += strideA;
+        b += strideB;
+    }
+    return sum;
+}
