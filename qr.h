@@ -13,4 +13,5 @@ houseHolderFactor* houseHolderQR(matrix* a);
 void getExplicitQRFromHouseholder(houseHolderFactor* hhf, matrix** q, matrix** r);
 void implilcitQx(houseHolderFactor* hhf, matrix* x);
 void implilcitQTx(houseHolderFactor* hhf, matrix* x);
+
 #endif
